@@ -24,6 +24,43 @@ The shared configuration connects all four clients to the same runtime and sessi
 - Web reconnection, compressed and cached assets, deferred startup work, and send-path improvements.
 - Reversible shared-runtime installation that preserves session data.
 
+## Improvements over the imported upstream versions
+
+These changes build on the two imported upstream projects. Source revisions are recorded in [NOTICE](NOTICE).
+
+### Web · Plan A
+
+Continued development of [0xcaff/codex-web](https://github.com/0xcaff/codex-web):
+
+| Area | Changes |
+| --- | --- |
+| Initial asset loading | Brotli/Gzip precompression, static asset caching, and critical module preloading reduce transfer waits on slow and public network connections. |
+| Frontend initialization | Tool handlers and the map engine initialize on demand. Account-scoped startup caching with background refresh reduces repeated work on subsequent visits. |
+| Background recovery | Reconnect on foreground and network recovery, reusing the backend browser session and IPC cache to reduce full-page reloads and repeated downloads. |
+| Message submission | Ordinary chat defaults to the local plugin catalog, avoiding a large remote catalog fetch before sending. Explicit remote catalog requests remain available. |
+| Draft preservation | Delayed submission acknowledgments preserve drafts entered after the original message was submitted. |
+| Cache recovery | Read cached segments in parallel, validate their contents, and restore messages in order to reduce reconnection overhead. |
+| Linux deployment | Persistent user services, shared-session launchers, and saved listening address and port settings. |
+
+### Android app and Relay · Plan B
+
+Continued development of [gronxb/codex-relay](https://github.com/gronxb/codex-relay):
+
+| Area | Changes |
+| --- | --- |
+| Long message bubbles | Remove total-length and per-line truncation from user messages and render them as native plain text, fixing clipped endings and history bubble rendering issues. Assistant responses retain Markdown. |
+| Long conversation loading | Load recent messages first and fetch earlier history in pages. Dragging at the top loads more, with the button retained and scroll position maintained. |
+| Session list | Present sessions as the main entries and load older sessions while scrolling. Collapse subagents under known parent sessions and group those without a matched parent. |
+| Android stability | Fix keyboard, scrolling, and layout animation compatibility when adding instructions during a run, plus startup failures caused by native module shrinking. |
+| Multiline input | Adjust Android input line-height handling to fix overlapping text. |
+| Connection switching | Edit addresses and ports, save multiple Relay profiles, and switch in the app without rebuilding the APK. |
+| Send status and collaboration | Confirm success after runtime acceptance and surface failures. Add approval-policy compatibility and fix cross-connection interference with approval and tool requests. |
+| Independent deployment | Android ARM64 APK build tooling and separate Relay user services. Plan B builds disable upstream OTA updates and cloud project association. |
+
+### Added shared-runtime integration
+
+A new persistent user service and connection adapters let the ordinary CLI, Linux Desktop, web, and Android connect to one official managed daemon. Keep existing CLI commands and the Desktop menu entry, with installation checks, runtime status, and reversible integration. A/B retain independent builds and deployments. See “Network and compatibility” below for the supported scope.
+
 ## Installation
 
 The integrated setup currently targets **Linux with systemd user services**. Install Node.js 22.14+, Python 3.11+, a signed-in Codex CLI, and Linux ChatGPT/Codex Desktop. The CLI must support managed daemon, `--remote`, and `--no-daemon`, with `daemon_auto_start` enabled. The Desktop build must include app-tools. See the [runtime guide](shared-runtime/README.md) for version and packaging requirements.
