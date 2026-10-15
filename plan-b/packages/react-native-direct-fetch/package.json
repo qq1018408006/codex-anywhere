@@ -1,0 +1,105 @@
+{
+  "name": "react-native-direct-fetch",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Codex Relay direct local-network fetch transport.",
+  "keywords": [
+    "react-native",
+    "react-native-direct-fetch"
+  ],
+  "homepage": "https://github.com/gronxb/codex-relay#readme",
+  "license": "Apache-2.0",
+  "author": "Codex Relay",
+  "source": "src/index",
+  "files": [
+    "src",
+    "react-native.config.js",
+    "lib",
+    "nitrogen",
+    "cpp",
+    "nitro.json",
+    "android/build.gradle",
+    "android/fix-prefab.gradle",
+    "android/gradle.properties",
+    "android/CMakeLists.txt",
+    "android/src",
+    "ios/**/*.h",
+    "ios/**/*.m",
+    "ios/**/*.mm",
+    "ios/**/*.cpp",
+    "ios/**/*.swift",
+    "app.plugin.js",
+    "*.podspec",
+    "README.md"
+  ],
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "types": "./src/index.ts",
+  "react-native": "src/index",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm run typecheck && bob build",
+    "codegen": "nitrogen --logLevel=\"debug\" && pnpm run build && node post-script.js"
+  },
+  "devDependencies": {
+    "nitrogen": "0.37.1",
+    "react": "19.3.0",
+    "react-native": "0.88.0-rc.3",
+    "react-native-builder-bob": "^0.40.18",
+    "react-native-nitro-modules": "^0.37.1",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-nitro-modules": "*"
+  },
+  "prettier": {
+    "quoteProps": "consistent",
+    "semi": false,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "useTabs": false
+  },
+  "eslintConfig": {
+    "extends": [
+      "@react-native",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
+    "root": true,
+    "rules": {
+      "prettier/prettier": [
+        "warn",
+        {
+          "quoteProps": "consistent",
+          "singleQuote": true,
+          "tabWidth": 2,
+          "trailingComma": "es5",
+          "useTabs": false
+        }
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "node_modules/",
+    "lib/"
+  ],
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      [
+        "typescript",
+        {
+          "project": "tsconfig.json"
+        }
+      ]
+    ]
+  }
+}

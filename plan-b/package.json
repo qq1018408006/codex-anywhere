@@ -1,0 +1,41 @@
+{
+  "name": "codex-relay-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "node scripts/relay-watchdog.mjs",
+    "dev:mobile": "pnpm --filter @codex-relay/mobile start",
+    "dev:mobile:android": "pnpm --filter @codex-relay/mobile android",
+    "dev:mobile:ios": "pnpm --filter @codex-relay/mobile ios",
+    "dev:relay": "node scripts/relay-watchdog.mjs",
+    "dev:server:watchdog": "node scripts/relay-watchdog.mjs",
+    "dev:server": "pnpm --filter codex-relay dev",
+    "codex-relay": "node scripts/relay-watchdog.mjs",
+    "codex-relay:cli": "NODE_ENV=development pnpm --filter codex-relay exec tsx src/cli.ts",
+    "lint": "oxlint apps packages --import-plugin --react-plugin --jsx-a11y-plugin --vitest-plugin && pnpm format:check",
+    "lint:fix": "oxlint apps packages --import-plugin --react-plugin --jsx-a11y-plugin --vitest-plugin --fix && pnpm format",
+    "format": "oxfmt . --write",
+    "format:check": "oxfmt . --check",
+    "build": "pnpm -r --if-present build",
+    "changeset": "changeset",
+    "version-packages:npm": "node scripts/version-packages.mjs npm",
+    "version-packages:mobile": "node scripts/version-packages.mjs mobile",
+    "release": "changeset publish",
+    "test:release": "node --test scripts/mobile-release-version.test.mjs scripts/hot-updater-expo.test.mjs && pnpm --filter @codex-relay/mobile exec vitest run src/lib/mobile-release-version.test.ts src/lib/version-policy.test.ts",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter codex-relay test",
+    "test:live:mobile-stream": "CODEX_RELAY_LIVE_APP_SERVER_TEST=1 pnpm --filter codex-relay test -- live-mobile-stream-contract.test.ts",
+    "postinstall": "node scripts/patch-keyboard-controller.mjs"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.1",
+    "node-addon-api": "^8.7.0",
+    "node-gyp": "^12.3.0",
+    "oxfmt": "^0.47.0",
+    "oxlint": "^1.62.0",
+    "typescript": "~5.9.2"
+  },
+  "packageManager": "pnpm@12.4.2",
+  "description": "Modified for Codex Anywhere: independent Plan B deployment and Android compatibility fixes."
+}

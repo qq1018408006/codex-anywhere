@@ -1,0 +1,378 @@
+// Modified for Codex Anywhere (2026); see the repository NOTICE.
+import type { ChatMessage } from "codex-relay/api-schema";
+import {
+  type LegendListRef,
+  type LegendListRenderItemProps,
+  type MaintainScrollAtEndOptions,
+  type MaintainVisibleContentPositionConfig,
+} from "@legendapp/list/react-native";
+import { KeyboardAwareLegendList } from "@legendapp/list/keyboard";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, RefreshControl, View } from "react-native";
+import { StyleSheet } from "react-native-unistyles";
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { ThemedText } from "@/components/themed-text";
+import { Icon } from "@/components/ui/icon";
+import { Colors, Spacing } from "@/constants/theme";
+import { hapticSelection } from "@/lib/haptics";
+
+import { MessageBubble } from "./MessageBubble";
+import { messageItemType, messageKeyExtractor } from "./timeline-message-items";
+import type { WorkspaceMarkdownPreviewTarget } from "./workspace-preview/markdown-target";
+import { RunningFooter } from "./RunningFooter";
+
+export { implementablePlanId } from "./plan-progress";
+
+const MESSAGE_ESTIMATED_ITEM_SIZE = 48;
+const MAINTAIN_SCROLL_AT_END: MaintainScrollAtEndOptions = {
+  animated: false,
+  on: {
+    dataChange: true,
+    itemLayout: true,
+    layout: true,
+  },
+};
+const MAINTAIN_VISIBLE_CONTENT_POSITION: MaintainVisibleContentPositionConfig<ChatMessage> = {
+  data: true,
+  size: true,
+};
+const MAINTAIN_SCROLL_AT_END_THRESHOLD = 0.1;
+const TIMELINE_LOADING_ENTER = FadeIn.duration(140).easing(Easing.out(Easing.cubic));
+const TIMELINE_LOADING_EXIT = FadeOut.duration(120).easing(Easing.out(Easing.cubic));
+const SCROLL_TO_END_ENTER = FadeIn.duration(140).easing(Easing.out(Easing.cubic));
+const SCROLL_TO_END_EXIT = FadeOut.duration(120).easing(Easing.out(Easing.cubic));
+const TIMELINE_CONTENT_SETTLE_OFFSET = 10;
+
+export function MessageTimeline({
+  bottomAccessoryHeight = 0,
+  isLoading,
+  isRunning,
+  keyboardLayoutFrozen = false,
+  messages,
+  isLoadingEarlierMessages,
+  onLoadEarlierMessages,
+  onKeyboardDismissRequest,
+  onMessageCopied,
+  onMessageRewind,
+  onOpenMarkdownAttachment,
+  threadId,
+}: {
+  bottomAccessoryHeight?: number;
+  isLoading?: boolean;
+  isRunning: boolean;
+  keyboardLayoutFrozen?: boolean;
+  messages: ChatMessage[];
+  isLoadingEarlierMessages?: boolean;
+  onLoadEarlierMessages?: () => void;
+  onKeyboardDismissRequest?: () => void;
+  onMessageCopied?: () => void;
+  onMessageRewind?: (message: ChatMessage) => void;
+  onOpenMarkdownAttachment?: (target: WorkspaceMarkdownPreviewTarget) => void;
+  threadId?: string;
+}) {
+  const listRef = useRef<LegendListRef | null>(null);
+  const removeAtEndListenerRef = useRef<(() => void) | null>(null);
+  const { bottom } = useSafeAreaInsets();
+  const rows = messages;
+  const timelineKey = threadId ?? "no-thread";
+  const [isAtEnd, setIsAtEnd] = useState(true);
+  const historyDragArmed = useRef(false);
+  const historyRequestPending = useRef(false);
+  const [settledTimelineKey, setSettledTimelineKey] = useState<string | undefined>(undefined);
+  const extraContentPadding = useSharedValue(0);
+  const contentRevealProgress = useSharedValue(0);
+  const hasRows = rows.length > 0;
+  const isTimelineReady = !hasRows || settledTimelineKey === timelineKey;
+  const showLoadingConversation = isLoading || (hasRows && !isTimelineReady);
+  const timelineContentStyle = useAnimatedStyle(() => ({
+    opacity: contentRevealProgress.value,
+    transform: [{ translateY: TIMELINE_CONTENT_SETTLE_OFFSET * (1 - contentRevealProgress.value) }],
+  }));
+
+  useEffect(() => {
+    extraContentPadding.value = Math.max(0, bottomAccessoryHeight);
+  }, [bottomAccessoryHeight, extraContentPadding]);
+
+  useEffect(() => {
+    setIsAtEnd(true);
+    setSettledTimelineKey(undefined);
+    historyDragArmed.current = false;
+    historyRequestPending.current = false;
+  }, [timelineKey]);
+
+  useEffect(() => {
+    if (!isLoadingEarlierMessages) historyRequestPending.current = false;
+  }, [isLoadingEarlierMessages]);
+
+  const loadEarlier = useCallback(
+    (manual = false) => {
+      if (
+        !onLoadEarlierMessages ||
+        isLoadingEarlierMessages ||
+        historyRequestPending.current ||
+        (!manual && !historyDragArmed.current)
+      )
+        return;
+      historyDragArmed.current = false;
+      historyRequestPending.current = true;
+      onLoadEarlierMessages();
+    },
+    [isLoadingEarlierMessages, onLoadEarlierMessages],
+  );
+
+  useEffect(
+    () => () => {
+      removeAtEndListenerRef.current?.();
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (isLoading || !hasRows) {
+      return;
+    }
+    let didCancel = false;
+    let settleFrame: number | undefined;
+    const layoutFrame = requestAnimationFrame(() => {
+      settleFrame = requestAnimationFrame(() => {
+        if (!didCancel) {
+          setSettledTimelineKey(timelineKey);
+        }
+      });
+    });
+    return () => {
+      didCancel = true;
+      cancelAnimationFrame(layoutFrame);
+      if (settleFrame !== undefined) {
+        cancelAnimationFrame(settleFrame);
+      }
+    };
+  }, [hasRows, isLoading, timelineKey]);
+
+  useEffect(() => {
+    contentRevealProgress.value = withTiming(showLoadingConversation ? 0 : 1, {
+      duration: showLoadingConversation ? 120 : 260,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [contentRevealProgress, showLoadingConversation]);
+
+  const renderMessage = useCallback(
+    ({ item }: LegendListRenderItemProps<ChatMessage>) => (
+      <MessageBubble
+        message={item}
+        onMessageCopied={onMessageCopied}
+        onMessageRewind={onMessageRewind}
+        onOpenMarkdownAttachment={onOpenMarkdownAttachment}
+      />
+    ),
+    [onMessageCopied, onMessageRewind, onOpenMarkdownAttachment],
+  );
+  const handleTimelineLoad = useCallback(() => {
+    requestAnimationFrame(() => {
+      setSettledTimelineKey(timelineKey);
+    });
+  }, [timelineKey]);
+  const handleListRef = useCallback((list: LegendListRef | null) => {
+    removeAtEndListenerRef.current?.();
+    listRef.current = list;
+    if (!list) {
+      return;
+    }
+
+    const listState = list.getState();
+    setIsAtEnd(listState.isAtEnd);
+    removeAtEndListenerRef.current = listState.listen("isAtEnd", setIsAtEnd);
+  }, []);
+  const handleScrollToEnd = useCallback(() => {
+    hapticSelection();
+    void listRef.current?.scrollToEnd({ animated: true }).catch(() => undefined);
+  }, []);
+
+  return (
+    <View onTouchStart={onKeyboardDismissRequest} style={styles.transitionHost}>
+      {!isLoading ? (
+        rows.length === 0 && !isRunning && !onLoadEarlierMessages ? (
+          <Animated.View style={[styles.transitionScene, timelineContentStyle]}>
+            <View style={styles.empty}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
+                Send a message to start the conversation.
+              </ThemedText>
+            </View>
+          </Animated.View>
+        ) : (
+          <Animated.View style={[styles.transitionScene, timelineContentStyle]}>
+            <KeyboardAwareLegendList
+              key={timelineKey}
+              ref={handleListRef}
+              alignItemsAtEnd
+              automaticallyAdjustContentInsets={false}
+              contentInsetAdjustmentBehavior="never"
+              contentInsetEndAdjustment={extraContentPadding}
+              data={rows}
+              ListHeaderComponent={
+                onLoadEarlierMessages ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => loadEarlier(true)}
+                    disabled={isLoadingEarlierMessages}
+                    style={styles.historyButton}
+                  >
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {isLoadingEarlierMessages ? "正在加载…" : "继续拖动或点击加载更早消息"}
+                    </ThemedText>
+                  </Pressable>
+                ) : null
+              }
+              estimatedItemSize={MESSAGE_ESTIMATED_ITEM_SIZE}
+              freeze={keyboardLayoutFrozen}
+              getItemType={messageItemType}
+              initialScrollAtEnd
+              keyExtractor={messageKeyExtractor}
+              renderItem={renderMessage}
+              contentContainerStyle={styles.content}
+              keyboardDismissMode="interactive"
+              keyboardLiftBehavior="whenAtEnd"
+              keyboardOffset={bottom - 24}
+              keyboardShouldPersistTaps="handled"
+              maintainScrollAtEnd={MAINTAIN_SCROLL_AT_END}
+              maintainScrollAtEndThreshold={MAINTAIN_SCROLL_AT_END_THRESHOLD}
+              maintainVisibleContentPosition={MAINTAIN_VISIBLE_CONTENT_POSITION}
+              onLoad={handleTimelineLoad}
+              onScrollBeginDrag={() => {
+                historyDragArmed.current = true;
+              }}
+              onStartReached={() => loadEarlier()}
+              onStartReachedThreshold={0.08}
+              refreshControl={
+                onLoadEarlierMessages ? (
+                  <RefreshControl
+                    refreshing={!!isLoadingEarlierMessages}
+                    onRefresh={() => loadEarlier(true)}
+                    tintColor={Colors.dark.textSecondary}
+                  />
+                ) : undefined
+              }
+              recycleItems={false}
+              scrollEventThrottle={48}
+              showsVerticalScrollIndicator={false}
+              style={styles.list}
+              ListFooterComponent={
+                isRunning ? <RunningFooter /> : <View style={styles.listEndPad} />
+              }
+            />
+          </Animated.View>
+        )
+      ) : null}
+      {!showLoadingConversation && hasRows && !isAtEnd ? (
+        <Animated.View
+          entering={SCROLL_TO_END_ENTER}
+          exiting={SCROLL_TO_END_EXIT}
+          pointerEvents="box-none"
+          style={styles.scrollToEndContainer}
+        >
+          <Pressable
+            accessibilityLabel="Scroll to latest message"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={handleScrollToEnd}
+            style={({ pressed }) => [styles.scrollToEndButton, pressed && styles.pressed]}
+          >
+            <Icon name="expand" size={18} tintColor={Colors.dark.text} />
+          </Pressable>
+        </Animated.View>
+      ) : null}
+      {showLoadingConversation ? (
+        <Animated.View
+          key={`loading-${timelineKey}`}
+          entering={TIMELINE_LOADING_ENTER}
+          exiting={TIMELINE_LOADING_EXIT}
+          style={styles.transitionScene}
+        >
+          <LoadingConversation />
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+}
+
+function LoadingConversation() {
+  return (
+    <View style={styles.empty} accessibilityRole="progressbar">
+      <ActivityIndicator color={Colors.dark.textSecondary} />
+      <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
+        Loading conversation…
+      </ThemedText>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  historyButton: {
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  content: {
+    paddingBottom: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
+  },
+  empty: {
+    alignItems: "center",
+    flex: 1,
+    gap: Spacing.two,
+    justifyContent: "center",
+    padding: Spacing.four,
+  },
+  emptyText: {
+    maxWidth: 260,
+    textAlign: "center",
+  },
+  list: {
+    flex: 1,
+  },
+  listEndPad: {
+    height: Spacing.two,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  scrollToEndButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(42, 42, 42, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    borderCurve: "continuous",
+    borderRadius: 18,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
+  scrollToEndContainer: {
+    alignItems: "center",
+    bottom: Spacing.three,
+    left: 0,
+    position: "absolute",
+    right: 0,
+    zIndex: 2,
+  },
+  transitionHost: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  transitionScene: {
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
+});

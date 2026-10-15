@@ -1,0 +1,35 @@
+Codex Anywhere
+Copyright 2026 Codex Anywhere contributors
+
+New shared-runtime and orchestration code is licensed under Apache-2.0.
+Component licenses and existing copyright notices remain applicable.
+
+Plan A: codex-web
+Original project: https://github.com/0xcaff/codex-web
+Source branch: https://github.com/qq1018408006/codex-web
+Imported working tree based on commit 58b9255f445de11e8eb61516a54de67a44b9c24c.
+Upstream package metadata declares MIT and identifies the author as
+martin <martincharles07@gmail.com>. The MIT terms are in plan-a/LICENSE.
+This fork adds Linux shared-session deployment, browser lifecycle handling,
+startup and send-path improvements, and compressed/cached asset delivery.
+
+Plan B: Codex Relay
+Original project: https://github.com/gronxb/codex-relay
+Imported working tree based on commit 2a0cca2eaa76d1bd16f8cfe54b892090e6a8bbee.
+Copyright 2026 Codex Relay contributors
+Licensed under Apache-2.0; see plan-b/LICENSE and plan-b/TRADEMARKS.md.
+This fork modifies Android deployment and connection profiles, keyboard/native
+compatibility, message rendering, history and session pagination, subagent
+grouping, and shared-runtime message/request routing. Modified upstream source
+files carry a Codex Anywhere change notice. New files implement these additions.
+Upstream hosted OTA deployment records and cloud publishing configurations
+are omitted; the Plan B local Android build disables upstream OTA updates.
+
+ws 8.21.0
+Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
+Copyright (c) 2013 Arnout Kazemier and contributors
+Copyright (c) 2016 Luigi Pinca and contributors
+Licensed under MIT; see shared-runtime/vendor/ws/LICENSE.
+
+Other bundled components retain their accompanying license notices.
+Desktop UI resource provenance is described in README.md and README.en.md.

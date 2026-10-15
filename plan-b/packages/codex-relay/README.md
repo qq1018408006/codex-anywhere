@@ -1,0 +1,210 @@
+# Codex Relay CLI
+
+Codex Relay runs a local bridge server for the Codex Relay mobile app. Keep Codex on your computer, then use your phone to pair with that local session, send prompts, watch streamed output, and respond to approval requests.
+
+Codex Relay is an independent project. It is not affiliated with, endorsed by, or sponsored by OpenAI or the OpenAI Codex team.
+
+## Requirements
+
+- Node.js 22.14 or newer
+- Codex CLI installed and signed in on the computer running the relay
+- The Codex Relay mobile app on the same network, Tailscale network, or another route that can reach your computer
+
+## Start the Relay
+
+Run the server from the workspace you want Codex to use:
+
+```sh
+npx codex-relay@latest
+```
+
+The CLI prints a QR code, a mobile URL, and a `codex-relay://pair...` pairing payload. Scan the QR code from the mobile app. If the relay detects multiple possible network addresses, the QR includes them and the app automatically uses the first address it can reach. If scanning is not available, paste the full pairing payload into the app.
+
+When the app shows an approval code, the interactive relay terminal shows the
+same code and asks `Approve? [y/N]`. Check that the codes match, then type `y`
+and press Enter in that terminal. Other input leaves the request unapproved.
+No second terminal is needed.
+
+For background relays or non-interactive output, use the approval command:
+
+```sh
+npx codex-relay@latest approve XXXX-XXXX
+```
+
+After approval, the phone can list Codex threads, start new work, stream messages, and handle approval prompts from the local Codex runtime.
+
+The thread list shows the 20 most recently active, non-archived root sessions across
+workspaces. This does not delete or archive older sessions. Set
+`CODEX_RELAY_THREAD_LIST_LIMIT=100` before starting the relay to show more history.
+The relay reads Codex's session index so refreshing the list does not repeatedly
+parse large legacy rollout files. An empty index triggers a bounded history lookup;
+legacy files copied into a partially populated index may need to be discovered by
+Codex before they appear in the relay.
+
+## Shared Terminal and Mobile Sessions
+
+On macOS, Codex Relay prefers Codex's shared Unix socket so terminal and mobile clients can follow the same live sessions. If the shared app-server cannot start or initialize, the relay prints a warning and continues with a private app-server.
+
+Linux, WSL, and native Windows keep using a private app-server by default. A terminal TUI that was started separately can resume the same saved thread, but it does not receive the relay process's live events.
+
+Require the shared app-server on any platform:
+
+```sh
+npx codex-relay@latest --shared-app-server
+```
+
+This explicit mode does not fall back to a private app-server when shared startup fails.
+
+When a shared app-server is already running, the relay attaches to it instead of starting another one. If the relay's own socket connection resets, it reconnects without deliberately stopping the shared app-server.
+
+Then connect a new terminal TUI to the shared app-server. On macOS, Linux, or WSL:
+
+```sh
+codex resume --remote unix://
+```
+
+On native Windows, use the loopback WebSocket endpoint:
+
+```powershell
+codex resume --remote ws://127.0.0.1:8788
+```
+
+Pass a thread ID after the remote endpoint to open a specific thread. The relay prints the attach command at startup. Mobile and the connected terminal can then observe the same live sessions through one socket-backed app-server. An already-running standalone TUI cannot be converted in place; exit it and reconnect with `--remote`.
+
+Shared mode uses Codex's experimental app-server transport. A directly connected terminal TUI has its own WebSocket connection, which the relay cannot observe or reconnect. If that terminal reports a socket reset while the thread continues on mobile, reconnect it with the matching remote endpoint above and append the thread ID if needed.
+
+Shared mode requires a recent Codex CLI with app-server and `resume --remote` support. It uses a Unix socket on macOS, Linux, and WSL, or a loopback-only WebSocket on Windows. If explicit shared mode is unavailable, update Codex or omit `--shared-app-server`. On macOS, set `CODEX_RELAY_APP_SERVER_MODE=stdio` to force private mode instead of using the shared-first default.
+
+## Background Mode
+
+To keep the relay running after the command returns:
+
+```sh
+npx codex-relay@latest --bg
+```
+
+Background mode writes runtime files under `.codex-relay/` in the current directory:
+
+- `.codex-relay/server.log`
+- `.codex-relay/server.pid`
+- `.codex-relay/server-state.json`
+- `.codex-relay/auth.db`
+
+Print the current pairing QR again:
+
+```sh
+npx codex-relay@latest qr
+```
+
+Stop a background server:
+
+```sh
+npx codex-relay@latest stop
+```
+
+## Commands
+
+```sh
+npx codex-relay@latest
+```
+
+Start the relay in the foreground.
+
+```sh
+npx codex-relay@latest --bg
+```
+
+Start the relay in the background.
+
+```sh
+npx codex-relay@latest stop
+```
+
+Stop the background relay. Repeating this command is safe when no background server is running.
+
+```sh
+npx codex-relay@latest --shared-app-server
+```
+
+Require the relay to start through Codex's shared app-server socket.
+
+```sh
+npx codex-relay@latest qr
+```
+
+Print the latest pairing QR for an already running relay.
+
+```sh
+npx codex-relay@latest approve XXXX-XXXX
+```
+
+Approve a pending mobile pairing request.
+
+```sh
+npx codex-relay@latest --dangerously-auto-approve
+```
+
+Start the relay and automatically approve mobile pairing requests. Use this only for controlled review or demo environments.
+
+## Configuration
+
+The relay listens on `0.0.0.0:8787` by default. Configure it with environment variables:
+
+| Variable                               | Purpose                                                                                                                                                         |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                                 | Server port. Defaults to `8787`.                                                                                                                                |
+| `HOST`                                 | Listen host. Defaults to `0.0.0.0`.                                                                                                                             |
+| `CODEX_RELAY_WORKSPACE_PATH`           | Workspace path Codex should use. Defaults to the directory where you run `npx codex-relay@latest`.                                                              |
+| `CODEX_RELAY_AUTH_DB_PATH`             | Pairing and session database path. Defaults to `.codex-relay/auth.db`.                                                                                          |
+| `CODEX_RELAY_APPROVAL_SECRET`          | Secret used by the local approve command. Usually generated automatically.                                                                                      |
+| `CODEX_RELAY_DANGEROUSLY_AUTO_APPROVE` | Set to `1` to auto-approve mobile pairing requests. Prefer the CLI flag for local use.                                                                          |
+| `CODEX_RELAY_APP_SERVER_MODE`          | Set to `socket` to require shared mode or `stdio` to require private mode. Unset prefers shared mode with startup fallback on macOS and private mode elsewhere. |
+| `CODEX_HOME`                           | Codex home directory, used when reading Codex session metadata.                                                                                                 |
+| `CODEX_BIN`                            | Codex CLI executable path.                                                                                                                                      |
+
+Examples:
+
+```sh
+PORT=8788 npx codex-relay@latest
+```
+
+```sh
+CODEX_RELAY_WORKSPACE_PATH=/path/to/project npx codex-relay@latest
+```
+
+## Network Notes
+
+The phone must be able to reach one of the URLs printed by the relay.
+
+- On the same Wi-Fi network, the relay usually prints a local network address.
+- On Tailscale, the relay prefers your Tailscale address when it can detect one.
+- If several Wi-Fi, VPN, or virtual network addresses are available, the QR includes all detected candidates and the app tries them automatically.
+
+## Troubleshooting
+
+If `npx codex-relay@latest qr` cannot find a server, start one first:
+
+```sh
+npx codex-relay@latest
+```
+
+If the relay says another process is using the local pairing database, use the existing server:
+
+```sh
+npx codex-relay@latest qr
+```
+
+Or stop the background process shown by the CLI:
+
+```sh
+npx codex-relay@latest stop
+```
+
+If the mobile app cannot connect, confirm that the phone can reach the printed `Mobile:` URL and that the chosen port is not blocked by a firewall.
+
+Connection checklist:
+
+- Are the phone and computer on the same Wi-Fi or LAN?
+- If keeping the same network is difficult, are both devices connected through Tailscale or another reachable private network?
+- Can the phone open the exact `Mobile:` URL printed by the relay?
+- Does the computer firewall allow inbound traffic on the relay port, usually `8787`?

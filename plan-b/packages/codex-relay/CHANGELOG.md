@@ -1,0 +1,141 @@
+# codex-relay
+
+## 1.6.1
+
+### Patch Changes
+
+- 18a5ac9: Add GPT-6.1 Sol to the fallback and mobile preview model catalogs with Low through Ultra reasoning and Fast mode, preserving Astra as the app default and existing GPT-6 Sol selections. Update the bundled Codex SDK and CLI to 0.159.2.
+
+## 1.6.0
+
+### Minor Changes
+
+- 2cbe4ab: Release codex-relay 1.6.0 with Codex SDK and bundled CLI 0.156.1, which adds GPT-6 Sol and GPT-6 Luna next to GPT-6 Astra. Codex 0.156 removed `thread/rollback`, so rewinding a chat saved in the legacy history format now explains that it can no longer be rewound instead of returning the raw app-server error. Load chat history whose images are referenced by uploaded file ID, and fall back to the GPT-6 lineup when the host model catalog is unavailable. Warn in the mobile app when the connected relay is older than 1.6.0 and show each model's Fast tier description from the Codex catalog. Deliver the mobile changes through the existing OTA release workflow for the current App Store 1.5.0 binary.
+
+### Patch Changes
+
+- 290d078: Default to GPT-6 Astra when available while preserving explicit model selections. Warn when the connected codex-relay package is older than 1.5.0. This mobile OTA requires the Expo 57 App Store 1.5.0 binary and targets app version 1.5.0 through the existing release workflow.
+- b900232: Show the originating thread title in push notifications and optionally include the lowest remaining Codex usage percentage in turn-complete alerts.
+- 290d078: Upgrade the bundled Codex CLI and SDK to 0.153.2 for the codex-relay 1.5.0 release.
+
+## 1.5.2
+
+### Patch Changes
+
+- 81c3934: Approve pairing directly in the interactive relay terminal by confirming the code and typing y followed by Enter. Keep the approval command for background relays, and explain both options on the phone.
+
+  Make the pairing route own deep links, show connection progress immediately, probe candidate addresses concurrently, and preserve timeout details in network errors.
+
+- 28dfb8b: Read recent sessions from the Codex index and limit the list to 20 by default, avoiding mobile timeouts from repeatedly scanning large legacy histories. Add CODEX_RELAY_THREAD_LIST_LIMIT to control the visible history size without deleting history.
+
+## 1.5.1
+
+### Patch Changes
+
+- 7a18692: Report an occupied server port with recovery instructions instead of an unhandled Node error.
+
+## 1.5.0
+
+### Minor Changes
+
+- c5bfb32: Release codex-relay 1.5.0 with Codex SDK and bundled CLI 0.153.4. Warn in the mobile app when the connected relay is older than 1.5.0. Deliver the compatibility warning through the existing OTA release workflow for the current App Store binary.
+
+## 1.4.14
+
+### Patch Changes
+
+- 72af772: Keep started assistant messages in a streaming state, create missing messages before forwarding app-server deltas, and preserve whitespace-only deltas such as line breaks.
+
+## 1.4.13
+
+### Patch Changes
+
+- fe8e795: Resume persisted app-server threads before starting turns so mobile clients continue receiving streamed responses after relay reconnections.
+
+## 1.4.12
+
+### Patch Changes
+
+- d40b19e: Hide Codex-injected context blocks from thread history responses.
+
+## 1.4.11
+
+### Patch Changes
+
+- bdc4b5a: Restore fast thread history loading and keep relay version mismatches as sidebar warnings.
+
+## 1.4.10
+
+### Patch Changes
+
+- f764166: Keep relay and mobile thread history consistent with Codex 0.149 app-server and SDK behavior, and require the compatible relay release from the app.
+
+## 1.4.9
+
+### Patch Changes
+
+- 5d6da00: Update `@openai/codex-sdk` to `0.149.1`.
+
+## 1.4.8
+
+### Patch Changes
+
+- 5a64d96: Restore conversation history for running threads recorded by current Codex versions.
+
+## 1.4.7
+
+### Patch Changes
+
+- ea78eff: Persist pinned chats locally so they remain available across app restarts.
+
+## 1.4.6
+
+### Patch Changes
+
+- afcf5bd: Keep paired mobile sessions connected until they are explicitly signed out or cleared.
+
+## 1.4.5
+
+### Patch Changes
+
+- d579920: Suppress subagent action-required and completion push notifications using persistent thread ancestry.
+- 3150a9d: Support renaming and rewinding Codex app-server chats from mobile.
+- f810d3f: Reload the active chat from the Codex app-server when refreshing from mobile.
+
+## 1.4.4
+
+### Patch Changes
+
+- dfa005a: fix: isolate subagent threads from clients
+
+## 1.4.3
+
+### Patch Changes
+
+- ebb83b4: Prefer the shared Codex app-server on macOS, with automatic private-mode fallback when default shared startup fails. Keep Linux and Windows defaults unchanged, and preserve `--shared-app-server` as a required shared mode.
+- 854d799: fix: clean up cancelled thread streams and stop repeated web preview probes
+- 13a1c27: Upgrade the Codex SDK to 0.145.0, add an idempotent `stop` command for background relays, and recover shared app-server startup when a stale Unix socket is present.
+
+## 1.4.2
+
+### Patch Changes
+
+- 1881c31: Wait longer for the shared Codex app-server to finish cold startup.
+
+## 1.4.1
+
+### Patch Changes
+
+- 1df8e01: Start queued input when the active turn completes during queued-input submission.
+- cfb2b8c: Avoid turn-complete push notifications for spawned subagent threads.
+
+## 1.4.0
+
+### Minor Changes
+
+- 346bba0: Add shared app-server support for native Windows through a loopback WebSocket.
+- 2bb9703: Add opt-in Expo push notifications for mobile turn-complete and action-required alerts.
+
+### Patch Changes
+
+- baa714c: Reconnect to a shared app-server socket after a local transport reset without deliberately stopping the shared server, with ownership diagnostics and terminal recovery guidance.

@@ -1,0 +1,8 @@
+Codex Anywhere shared-runtime
+Copyright 2026 Codex Anywhere contributors
+Licensed under Apache-2.0; see LICENSE.
+
+Includes ws 8.21.0, licensed under MIT; see vendor/ws/LICENSE.
+Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
+Copyright (c) 2013 Arnout Kazemier and contributors
+Copyright (c) 2016 Luigi Pinca and contributors

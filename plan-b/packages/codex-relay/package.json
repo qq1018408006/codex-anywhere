@@ -1,0 +1,75 @@
+{
+  "name": "codex-relay",
+  "version": "1.6.1",
+  "description": "Local Codex Relay CLI bridge for the Codex Relay mobile app.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gronxb/codex-relay.git",
+    "directory": "packages/codex-relay"
+  },
+  "bin": {
+    "codex-relay": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "api-schema.ts",
+    "src/api-schema.ts"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/cli.js",
+    "./api-schema": {
+      "types": "./src/api-schema.ts",
+      "react-native": "./api-schema.ts",
+      "import": "./dist/api-schema.js",
+      "default": "./dist/api-schema.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "NODE_ENV=development tsx watch src/cli.ts",
+    "prepack": "pnpm build",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "^14.0.0",
+    "@hono/node-server": "^1.19.6",
+    "@libsql/client": "0.17.4",
+    "@lydell/node-pty": "1.2.0-beta.12",
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "@noble/ciphers": "2.2.0",
+    "@noble/curves": "2.2.0",
+    "@noble/hashes": "2.2.0",
+    "@openai/codex": "0.159.2",
+    "@openai/codex-sdk": "0.159.2",
+    "base64-js": "1.5.1",
+    "commander": "^14.0.3",
+    "es-git": "^0.6.0",
+    "hono": "^4.10.7",
+    "libsql": "0.5.29",
+    "picocolors": "^1.1.1",
+    "qrcode-terminal": "^0.12.0",
+    "ws": "8.21.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/qrcode-terminal": "^0.12.2",
+    "tsdown": "0.21.10",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.15"
+  },
+  "engines": {
+    "node": ">=22.14.0"
+  }
+}

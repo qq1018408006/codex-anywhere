@@ -1,0 +1,88 @@
+html,
+body,
+#editor-shell {
+  background: #252525;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+#editor-shell {
+  display: flex;
+}
+
+#line-number-rail {
+  background: #252525;
+  box-sizing: border-box;
+  color: #8e98a6;
+  display: none;
+  flex: 0 0 38px;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 19px;
+  overflow: hidden;
+  padding-top: 10px;
+  text-align: right;
+  user-select: none;
+}
+
+#line-number-rail.visible {
+  display: block;
+}
+
+#line-number-rail > div {
+  box-sizing: border-box;
+  height: 19px;
+  padding-right: 8px;
+}
+
+#container {
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.monaco-editor,
+.monaco-editor-background,
+.monaco-editor .inputarea.ime-input {
+  background: #252525 !important;
+}
+
+.monaco-editor .margin,
+.monaco-editor .glyph-margin {
+  background: #252525 !important;
+}
+
+.monaco-editor .mtk1 {
+  color: #d6dee8 !important;
+}
+
+body.viewer-mode .monaco-editor .cursor,
+body.viewer-mode .monaco-editor .cursors-layer {
+  display: none !important;
+}
+
+body.viewer-mode .monaco-editor .current-line,
+body.viewer-mode .monaco-editor .current-line-margin {
+  border: 0 !important;
+}
+
+body.hide-line-numbers .monaco-editor .glyph-margin,
+body.hide-line-numbers .monaco-editor .line-numbers,
+body.hide-line-numbers .monaco-editor .margin,
+body.custom-line-numbers .monaco-editor .margin {
+  display: none !important;
+  width: 0 !important;
+}
+
+.monaco-editor textarea.inputarea,
+.monaco-editor textarea.inputarea.ime-input {
+  background: transparent !important;
+  border: 0 !important;
+  caret-color: transparent !important;
+  color: transparent !important;
+  outline: none !important;
+  -webkit-text-fill-color: transparent !important;
+}

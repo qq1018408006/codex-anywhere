@@ -1,0 +1,73 @@
+name: Bug report
+description: Report a reproducible problem with Codex Relay.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Codex Relay.
+
+        Please write issues in English by default. If English is difficult, start with a short English summary and then add details in your preferred language.
+  - type: checkboxes
+    id: language
+    attributes:
+      label: Language
+      options:
+        - label: I wrote this issue in English, or included a concise English summary first.
+          required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+      placeholder: The mobile app cannot connect after scanning the QR code.
+    validations:
+      required: true
+  - type: checkboxes
+    id: network-checklist
+    attributes:
+      label: Network checklist
+      description: Most pairing and connection problems are network reachability issues.
+      options:
+        - label: My phone and computer are on the same Wi-Fi or LAN.
+        - label: If staying on the same network is difficult, I tried Tailscale or another reachable private network.
+        - label: I confirmed that the phone can open the `Mobile:` URL printed by the relay.
+        - label: I confirmed that the relay computer firewall allows inbound traffic on the relay port.
+        - label: If the printed URL was not reachable, I tried setting `CODEX_RELAY_PUBLIC_URL` to a reachable LAN, Tailscale, or tunnel URL.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Include the Codex Relay version, Node.js version, OS, and mobile app version if known.
+      placeholder: codex-relay 0.0.0, Node 22.14, macOS 15, iOS app 1.0
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `npx codex-relay@latest`
+        2. Scan the QR code
+        3. Tap ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste relevant terminal output, app screenshots, or relay logs. Remove secrets and private paths first.
+      render: shell

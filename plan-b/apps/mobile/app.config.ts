@@ -1,0 +1,131 @@
+// Modified for Codex Anywhere (2026); see the repository NOTICE.
+import type { ConfigContext, ExpoConfig } from "expo/config";
+import { config } from "dotenv";
+
+config({ path: ".env.hotupdater.rc22", quiet: true });
+
+const isPlanB = process.env.CODEX_RELAY_VARIANT === "plan-b";
+const hotUpdaterApiKey =
+  process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim() || process.env.HOT_UPDATER_API_KEY?.trim();
+
+export default function appConfig(_context: ConfigContext): ExpoConfig {
+  return {
+    name: isPlanB ? "Codex Relay B" : "Codex Relay",
+    slug: isPlanB ? "codex-relay-b" : "codex-relay",
+    version: isPlanB ? "1.6.2" : "1.6.1",
+    orientation: "default",
+    icon: "./assets/images/icon.png",
+    scheme: "codex-relay",
+    userInterfaceStyle: "automatic",
+    ios: {
+      icon: "./assets/images/icon.png",
+      bundleIdentifier: isPlanB ? "com.gronstudio.codexrelay.planb" : "com.gronstudio.codexrelay",
+      deploymentTarget: "16.4",
+      supportsTablet: true,
+      infoPlist: {
+        NSAppTransportSecurity: {
+          NSAllowsArbitraryLoads: true,
+          NSAllowsLocalNetworking: true,
+        },
+        ITSAppUsesNonExemptEncryption: false,
+        NSLocalNetworkUsageDescription:
+          "Codex Relay uses the local network to connect this device to the Codex Relay server running on your computer.",
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+      },
+    },
+    android: {
+      ...(isPlanB ? { versionCode: 2 } : {}),
+      adaptiveIcon: {
+        backgroundColor: "#191919",
+        foregroundImage: "./assets/images/android-icon-foreground.png",
+        monochromeImage: "./assets/images/android-icon-monochrome.png",
+      },
+      predictiveBackGestureEnabled: false,
+      package: isPlanB ? "com.gronstudio.codexrelay.planb" : "com.gronstudio.codexrelay",
+      permissions: ["android.permission.CAMERA", "android.permission.POST_NOTIFICATIONS"],
+    },
+    web: {
+      output: "static",
+      favicon: "./assets/images/favicon.png",
+    },
+    plugins: [
+      "expo-router",
+      [
+        "expo-dev-client",
+        {
+          launchMode: "most-recent",
+        },
+      ],
+      [
+        "expo-splash-screen",
+        {
+          backgroundColor: "#191919",
+          image: "./assets/images/splash-icon.png",
+          imageWidth: 112,
+          android: {
+            image: "./assets/images/splash-icon.png",
+            imageWidth: 112,
+          },
+        },
+      ],
+      [
+        "expo-camera",
+        {
+          cameraPermission:
+            "Codex Relay uses the camera to scan QR codes that contain your local relay server address, for example to connect this device to the Codex Relay server running on your computer.",
+          microphonePermission: false,
+          recordAudioAndroid: false,
+          barcodeScannerEnabled: true,
+        },
+      ],
+      [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "Codex Relay uses photo library access so you can attach images to a Codex chat, for example to ask Codex to inspect a screenshot.",
+          microphonePermission: false,
+        },
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-notifications",
+      "expo-system-ui",
+      "expo-web-browser",
+      [
+        "@hot-updater/expo",
+        {
+          channel: "production",
+          publicKeyPath: "./keys/public-key.pem",
+        },
+      ],
+      [
+        "expo-secure-store",
+        {
+          faceIDPermission: false,
+        },
+      ],
+      [
+        "expo-build-properties",
+        {
+          android: {
+            usesCleartextTraffic: true,
+          },
+        },
+      ],
+    ],
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true,
+    },
+    extra: {
+      hotUpdaterApiKey: isPlanB ? undefined : hotUpdaterApiKey,
+      router: {},
+      ...(isPlanB ? {} : { eas: { projectId: "6659e28f-2ac7-4055-8f56-7b4ca5e65847" } }),
+    },
+  };
+}

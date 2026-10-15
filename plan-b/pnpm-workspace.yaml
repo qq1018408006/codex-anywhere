@@ -1,0 +1,20 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  dtrace-provider: false
+  esbuild: true
+  msgpackr-extract: true
+  protobufjs: false
+  react-native-enriched-markdown: true
+  sharp: true
+  workerd: true
+
+blockExoticSubdeps: false
+
+nodeLinker: hoisted
+
+minimumReleaseAge: 0
+
+overrides:
+  "@libsql/isomorphic-ws>ws": 8.21.0

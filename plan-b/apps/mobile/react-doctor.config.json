@@ -1,0 +1,32 @@
+{
+  "ignore": {
+    "rules": [
+      "knip/exports",
+      "knip/files",
+      "knip/types",
+      "react-doctor/async-await-in-loop",
+      "react-doctor/async-parallel",
+      "react-doctor/no-cascading-set-state",
+      "react-doctor/no-default-props",
+      "react-doctor/no-derived-state-effect",
+      "react-doctor/no-derived-useState",
+      "react-doctor/no-effect-event-handler",
+      "react-doctor/no-giant-component",
+      "react-doctor/no-prop-callback-in-effect",
+      "react-doctor/prefer-use-effect-event",
+      "react-doctor/prefer-useReducer",
+      "react-doctor/rerender-state-only-in-handlers",
+      "react-doctor/rendering-hydration-no-flicker",
+      "react-doctor/rn-bottom-sheet-prefer-native",
+      "react-doctor/rn-no-legacy-shadow-styles",
+      "react-doctor/rn-no-scrollview-mapped-list",
+      "react-doctor/rn-style-prefer-boxshadow"
+    ],
+    "overrides": [
+      {
+        "files": ["src/lib/codex-relay-api.ts"],
+        "rules": ["react-doctor/no-secrets-in-client-code"]
+      }
+    ]
+  }
+}
