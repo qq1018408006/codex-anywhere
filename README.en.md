@@ -1,5 +1,7 @@
 # Codex Anywhere
 
+![One live Codex session across CLI, Desktop, Web, and Android](docs/assets/poster.png)
+
 English · [中文](README.md)
 
 Share live Codex sessions across CLI, desktop, web, and Android through a shared runtime.

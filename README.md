@@ -1,5 +1,7 @@
 # Codex Anywhere
 
+![CLI、Desktop、网页与 Android 共享同一个实时 Codex 会话](docs/assets/poster.png)
+
 [English](README.en.md) · 中文
 
 让 Codex 在电脑、手机与网页间共享同一个实时会话，支持 CLI、Desktop 和 Android。
