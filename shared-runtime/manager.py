@@ -22,7 +22,7 @@ import tomllib
 import urllib.request
 
 SOURCE = Path(__file__).resolve().parent
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 TOOL_ENV = ('CODEX_APP_TOOLS_PIPE_PATH', 'CODEX_MCP_NODE_PATH')
 SHARED_FEATURES = ('api_key_model_discovery', 'auth_elicitation',
                    'code_mode_host', 'mcp_oauth_refresh_coordination')
@@ -366,7 +366,9 @@ def discover(args):
               'serviceDir': str(Path(args.service_dir or user_home / '.config/systemd/user').resolve()),
               'planAUnit': args.plan_a_unit, 'planARuntime': args.plan_a_runtime,
               'planBUnit': args.plan_b_unit, 'planBRuntime': args.plan_b_runtime}
-    config['sharedFeaturePolicy'] = cli_shared_features(config)
+    # Validate support now, but resolve values again at runtime so CLI upgrades
+    # do not leave the installation pinned to obsolete feature defaults.
+    cli_shared_features(config)
     return config
 
 

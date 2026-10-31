@@ -95,6 +95,48 @@ class RestoreTests(unittest.TestCase):
                 'api_key_model_discovery': False, 'auth_elicitation': True,
                 'code_mode_host': True, 'mcp_oauth_refresh_coordination': False})
 
+    def test_new_install_tracks_cli_features_after_an_upgrade(self):
+        desktop = self.root / 'ChatGPT'
+        codex = self.root / 'codex'
+        node = self.root / 'node'
+        for executable in (desktop, codex, node):
+            executable.write_text('#!/bin/sh\n')
+            executable.chmod(0o755)
+        tools = self.root / 'resources/plugins/openai-bundled/plugins/codex-app-tools/server.mjs'
+        tools.parent.mkdir(parents=True)
+        tools.touch()
+        args = manager.argparse.Namespace(
+            home=str(self.root), instance='default', state=None,
+            desktop=str(desktop), codex=str(codex), node=str(node),
+            codex_home=str(self.root / '.codex'), desktop_profile=None,
+            port=9277, no_systemd=True, service_dir=None,
+            plan_a_unit='plan-a.service', plan_a_runtime='plan-a-runtime.service',
+            plan_b_unit='plan-b.service', plan_b_runtime='plan-b-runtime.service')
+        before = dict.fromkeys(manager.SHARED_FEATURES, True)
+        before.update(api_key_model_discovery=False, mcp_oauth_refresh_coordination=False)
+        after = dict.fromkeys(manager.SHARED_FEATURES, True)
+        with patch.object(manager, 'run') as run, \
+             patch.object(manager, 'cli_shared_features', side_effect=[before, before, after]) as features:
+            run.return_value.stdout = '--remote --no-daemon'
+            config = json.loads(json.dumps(manager.discover(args)))
+            self.assertNotIn('sharedFeaturePolicy', config)
+            run.return_value.stdout = '{}'
+            for expected in (before, after):
+                manager.reconcile_shared_features(config)
+                self.assertEqual(json.loads(run.call_args.args[0][-1]), expected)
+            self.assertEqual(features.call_count, 3)
+
+    def test_explicit_shared_feature_policy_remains_respected(self):
+        policy = dict.fromkeys(manager.SHARED_FEATURES, False)
+        config = {'node': '/node', 'package': '/package', 'socket': '/runtime.sock',
+                  'sharedFeaturePolicy': policy}
+        with patch.object(manager, 'cli_shared_features') as features, \
+             patch.object(manager, 'run') as run:
+            run.return_value.stdout = '{}'
+            manager.reconcile_shared_features(config)
+            features.assert_not_called()
+            self.assertEqual(json.loads(run.call_args.args[0][-1]), policy)
+
     def test_snapshot_saved_before_write_can_restore_interrupted_install(self):
         path = self.root / 'config'
         path.write_text('before')

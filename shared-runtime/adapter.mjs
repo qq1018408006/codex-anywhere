@@ -45,7 +45,7 @@ export async function rpc(socketPath) {
     });
   }
   const initialize = await request('initialize', {
-    clientInfo: {name: 'codex_runtime_share', version: '0.1.1'},
+    clientInfo: {name: 'codex_runtime_share', version: '0.1.2'},
     capabilities: {experimentalApi: true},
   });
   ws.send(JSON.stringify({method: 'initialized'}));

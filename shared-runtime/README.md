@@ -100,9 +100,11 @@ Desktop 使用原生工具 socket；A 使用自己的工具 socket。共享后�
 
 这是对已安装版本验证过的连接层。Desktop 的外部后台环境变量来自本机程序与实测，官方文档把 app-server WebSocket 传输标为 experimental / unsupported；升级后应复验。参见 [Codex App Server](https://learn.chatgpt.com/docs/app-server)。
 
-0.1.1 安装时记录管理 CLI 的四项共享功能设置，并在后台启动及常驻检查时核对。`api_key_model_discovery`、`auth_elicitation` 不一致时，通过官方 `experimentalFeature/enablement/set` 接口更新运行时，核对返回值和实际设置；不重启 daemon，也不写入 `config.toml` 或依赖 daemon 设置文件中的旧字段。该策略保存在接入层自己的配置中，后台重建后重新应用。
+0.1.2 起，安装时仅检查管理 CLI 是否支持四项共享功能，不再固定当时的功能值；后台启动及常驻检查时重新读取当前 CLI 的有效设置，避免升级后旧默认值导致服务启动失败。仍支持在接入层配置中显式指定 `sharedFeaturePolicy`。`api_key_model_discovery`、`auth_elicitation` 不一致时，通过官方 `experimentalFeature/enablement/set` 接口更新运行时，核对返回值和实际设置；不重启 daemon，也不写入 `config.toml` 或依赖 daemon 设置文件中的旧字段。
 
-`code_mode_host`、`mcp_oauth_refresh_coordination` 没有同样的 live 更新支持，若它们不一致则报错并保留后台运行。多个 CLI 仍需使用一致的共享设置；升级 CLI 改变默认值、项目配置覆盖或其他客户端反复更改共享功能时，需要重新统一策略。不能保证任意版本、任意不同设置的客户端都自动兼容。选择“不使用 daemon”会退出共享架构；兼容提示中的重启会影响其他连接。
+旧版安装自动保存的 `sharedFeaturePolicy` 不会仅因更新源码而消失；若希望跟随当前 CLI，应从状态目录的 `config.json` 和 `manifest.json` 的 `config` 对象中删除该键，并在没有运行中任务时重新启动共享服务及 A/B 前端服务。
+
+`code_mode_host`、`mcp_oauth_refresh_coordination` 没有同样的 live 更新支持；若它们不一致则报错，监控不会为对齐它们主动重启 daemon。多个 CLI 仍需使用一致的共享设置；升级 CLI 改变默认值、项目配置覆盖或其他客户端反复更改共享功能时，需要重新统一策略。不能保证任意版本、任意不同设置的客户端都自动兼容。选择“不使用 daemon”会退出共享架构；兼容提示中的重启会影响其他连接。
 
 VS Code Remote-SSH 扩展保持原运行方式，未纳入这四个前端的共享 runtime。它的活跃会话仍可能属于自己的后台并被锁定。接入层不会直接停止它的进程；尚未完成完整扩展功能验收。
 
